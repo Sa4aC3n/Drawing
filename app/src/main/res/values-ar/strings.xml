@@ -28,4 +28,11 @@
     <string name="leave_prompt_message">لديك رسمة لم يتم حفظها بعد. هل ترغب في حفظها قبل الخروج؟</string>
     <string name="empty_canvas_warning">يرجى رسم شيء أولاً!</string>
     <string name="sharing_error">تعذر مشاركة الرسمة.</string>
+
+    <!-- Category Groups / Filters -->
+    <string name="group_all">🌟 كل الدروس</string>
+    <string name="group_animals">🦁 حيوانات</string>
+    <string name="group_vehicles">🚗 مركبات</string>
+    <string name="group_characters">👑 شخصيات</string>
+    <string name="group_nature">🌸 طبيعة وأشياء</string>
 </resources>

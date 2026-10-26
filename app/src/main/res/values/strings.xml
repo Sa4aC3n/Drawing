@@ -29,6 +29,13 @@
     <string name="empty_canvas_warning">Please draw something first!</string>
     <string name="sharing_error">Could not share drawing.</string>
 
+    <!-- Category Groups / Filters -->
+    <string name="group_all">🌟 All Lessons</string>
+    <string name="group_animals">🦁 Animals</string>
+    <string name="group_vehicles">🚗 Vehicles</string>
+    <string name="group_characters">👑 Characters</string>
+    <string name="group_nature">🌸 Nature &amp; Objects</string>
+
     <!-- AdMob IDs -->
     <string name="admob_banner_id">ca-app-pub-5797893761930988/1862556556</string>
     <string name="admob_app_id">ca-app-pub-5797893761930988~5167376743</string>

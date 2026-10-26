@@ -13,11 +13,16 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
+import com.google.android.material.chip.ChipGroup
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var recyclerView: RecyclerView
+    private lateinit var chipGroup: ChipGroup
     private lateinit var adView: AdView
+    private lateinit var repository: DrawingLessonRepository
+    private lateinit var adapter: DrawingAdapter
+
     private var lastCategoryClickTime: Long = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,11 +38,13 @@ class MainActivity : AppCompatActivity() {
         adView = findViewById(R.id.adView)
         adView.loadAd(AdRequest.Builder().build())
 
+        repository = DrawingLessonRepository(this)
+
         recyclerView = findViewById(R.id.recyclerView_main)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
-        val categories = buildCategoryList()
-        val adapter = DrawingAdapter(categories) { category ->
+        val initialLessons = repository.getLessons(CategoryGroup.ALL)
+        adapter = DrawingAdapter(initialLessons) { category ->
             // Prevent multiple rapid clicks from spawning multiple activities
             val now = SystemClock.elapsedRealtime()
             if (now - lastCategoryClickTime > 600) {
@@ -49,6 +56,21 @@ class MainActivity : AppCompatActivity() {
             }
         }
         recyclerView.adapter = adapter
+
+        // Setup filter chips
+        chipGroup = findViewById(R.id.chipGroupFilters)
+        chipGroup.setOnCheckedStateChangeListener { _, checkedIds ->
+            if (checkedIds.isEmpty()) return@setOnCheckedStateChangeListener
+            val selectedGroup = when (checkedIds.first()) {
+                R.id.chipAnimals -> CategoryGroup.ANIMALS
+                R.id.chipVehicles -> CategoryGroup.VEHICLES
+                R.id.chipCharacters -> CategoryGroup.CHARACTERS
+                R.id.chipNature -> CategoryGroup.NATURE
+                else -> CategoryGroup.ALL
+            }
+            val filtered = repository.getLessons(selectedGroup)
+            adapter.updateCategories(filtered)
+        }
 
         // Setup back button press handling
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -83,53 +105,6 @@ class MainActivity : AppCompatActivity() {
             }
             .setNeutralButton(getString(R.string.cancel), null)
             .show()
-    }
-
-    private fun buildCategoryList(): List<DrawingCategory> {
-        val names = resources.getStringArray(R.array.names)
-        val descriptions = resources.getStringArray(R.array.descriptions)
-        val icons = intArrayOf(
-            R.drawable.car_icon,
-            R.drawable.house_icon,
-            R.drawable.spider_icon,
-            R.drawable.gun_icon,
-            R.drawable.boat_icon,
-            R.drawable.bird_icon,
-            R.drawable.elephant_icon,
-            R.drawable.flower_icon,
-            R.drawable.frog_icon,
-            R.drawable.horse_icon,
-            R.drawable.lion_icon,
-            R.drawable.mickey_icon,
-            R.drawable.dog_icon,
-            R.drawable.turtle_icon,
-            R.drawable.princess_icon
-        )
-        val keys = arrayOf(
-            "image_car",
-            "image_house",
-            "image_spider",
-            "image_gun",
-            "image_boat",
-            "image_bird",
-            "image_elephant",
-            "image_flower",
-            "image_frog",
-            "image_horse",
-            "image_lion",
-            "image_mickey_mouse",
-            "image_dog",
-            "image_turtle",
-            "image_princess"
-        )
-        return names.indices.map { i ->
-            DrawingCategory(
-                name = names[i],
-                description = descriptions[i],
-                iconResId = icons[i],
-                imageArrayKey = keys[i]
-            )
-        }
     }
 
     override fun onResume() {

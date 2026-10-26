@@ -1,5 +1,6 @@
 package com.art.drawingkids
 
+import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,9 +10,10 @@ import androidx.recyclerview.widget.RecyclerView
 
 /**
  * RecyclerView adapter for displaying drawing categories in MainActivity.
+ * Supports dynamic filtering by category groups.
  */
 class DrawingAdapter(
-    private val categories: List<DrawingCategory>,
+    private var categories: List<DrawingCategory>,
     private val onItemClick: (DrawingCategory) -> Unit
 ) : RecyclerView.Adapter<DrawingAdapter.ViewHolder>() {
 
@@ -36,4 +38,10 @@ class DrawingAdapter(
     }
 
     override fun getItemCount(): Int = categories.size
+
+    @SuppressLint("NotifyDataSetChanged")
+    fun updateCategories(newCategories: List<DrawingCategory>) {
+        this.categories = newCategories
+        notifyDataSetChanged()
+    }
 }
