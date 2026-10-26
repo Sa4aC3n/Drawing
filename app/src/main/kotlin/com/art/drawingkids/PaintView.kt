@@ -15,7 +15,7 @@ import android.view.View
  * Features:
  * - Anti-aliased smooth bezier curves
  * - High-precision pencil and eraser modes
- * - Full Undo / Redo history
+ * - Full Undo / Redo history powered by tested DrawingHistoryTracker
  * - Direct bitmap export without deprecated drawingCache
  * - Clean white canvas without hardware-acceleration artifacts
  */
@@ -64,9 +64,8 @@ class PaintView @JvmOverloads constructor(
     private var currentStrokeWidth = 6f
     private var isPencilMode = true
 
-    // Undo & Redo stacks
-    private val undoStack = mutableListOf<Stroke>()
-    private val redoStack = mutableListOf<Stroke>()
+    // Undo & Redo tracker
+    private val historyTracker = DrawingHistoryTracker<Stroke>()
 
     // Off-screen buffer for buttery smooth rendering
     private var bufferBitmap: Bitmap? = null
@@ -91,7 +90,7 @@ class PaintView @JvmOverloads constructor(
     private fun redrawAllStrokesToBuffer() {
         val canvas = bufferCanvas ?: return
         canvas.drawColor(CANVAS_BG_COLOR)
-        for (stroke in undoStack) {
+        for (stroke in historyTracker.getItems()) {
             strokePaint.color = stroke.color
             strokePaint.strokeWidth = stroke.strokeWidth
             canvas.drawPath(stroke.path, strokePaint)
@@ -142,8 +141,8 @@ class PaintView @JvmOverloads constructor(
 
         bufferCanvas?.drawPath(currentPath, strokePaint)
 
-        // Save completed stroke to undo stack
-        undoStack.add(
+        // Save completed stroke to history tracker
+        historyTracker.record(
             Stroke(
                 path = Path(currentPath),
                 color = color,
@@ -151,7 +150,6 @@ class PaintView @JvmOverloads constructor(
                 isEraser = !isPencilMode
             )
         )
-        redoStack.clear()
         currentPath.reset()
 
         notifyHistoryChanged()
@@ -210,9 +208,8 @@ class PaintView @JvmOverloads constructor(
     fun getStrokeWidth(): Float = currentStrokeWidth
 
     fun clear() {
-        if (undoStack.isEmpty() && currentPath.isEmpty) return
-        undoStack.clear()
-        redoStack.clear()
+        if (!hasDrawnStrokes() && currentPath.isEmpty) return
+        historyTracker.clear()
         currentPath.reset()
         bufferCanvas?.drawColor(CANVAS_BG_COLOR)
         invalidate()
@@ -220,9 +217,8 @@ class PaintView @JvmOverloads constructor(
     }
 
     fun undo(): Boolean {
-        if (undoStack.isEmpty()) return false
-        val removed = undoStack.removeAt(undoStack.lastIndex)
-        redoStack.add(removed)
+        if (!historyTracker.canUndo()) return false
+        historyTracker.undo()
         redrawAllStrokesToBuffer()
         invalidate()
         notifyHistoryChanged()
@@ -230,19 +226,18 @@ class PaintView @JvmOverloads constructor(
     }
 
     fun redo(): Boolean {
-        if (redoStack.isEmpty()) return false
-        val restored = redoStack.removeAt(redoStack.lastIndex)
-        undoStack.add(restored)
+        if (!historyTracker.canRedo()) return false
+        historyTracker.redo()
         redrawAllStrokesToBuffer()
         invalidate()
         notifyHistoryChanged()
         return true
     }
 
-    fun canUndo(): Boolean = undoStack.isNotEmpty()
-    fun canRedo(): Boolean = redoStack.isNotEmpty()
+    fun canUndo(): Boolean = historyTracker.canUndo()
+    fun canRedo(): Boolean = historyTracker.canRedo()
 
-    fun hasDrawnStrokes(): Boolean = undoStack.isNotEmpty()
+    fun hasDrawnStrokes(): Boolean = historyTracker.canUndo()
 
     private fun notifyHistoryChanged() {
         onHistoryChangedListener?.invoke(canUndo(), canRedo())
@@ -262,7 +257,7 @@ class PaintView @JvmOverloads constructor(
         exportCanvas.drawColor(CANVAS_BG_COLOR)
 
         // Draw all saved strokes
-        for (stroke in undoStack) {
+        for (stroke in historyTracker.getItems()) {
             strokePaint.color = stroke.color
             strokePaint.strokeWidth = stroke.strokeWidth
             exportCanvas.drawPath(stroke.path, strokePaint)
