@@ -1,0 +1,149 @@
+package com.art.drawingkids
+
+import android.content.Intent
+import android.net.Uri
+import android.os.Bundle
+import android.os.SystemClock
+import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.MobileAds
+
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var adView: AdView
+    private var lastCategoryClickTime: Long = 0
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        val toolbar: Toolbar = findViewById(R.id.toolbar)
+        setSupportActionBar(toolbar)
+
+        // Initialize AdMob
+        MobileAds.initialize(this)
+
+        adView = findViewById(R.id.adView)
+        adView.loadAd(AdRequest.Builder().build())
+
+        recyclerView = findViewById(R.id.recyclerView_main)
+        recyclerView.layoutManager = LinearLayoutManager(this)
+
+        val categories = buildCategoryList()
+        val adapter = DrawingAdapter(categories) { category ->
+            // Prevent multiple rapid clicks from spawning multiple activities
+            val now = SystemClock.elapsedRealtime()
+            if (now - lastCategoryClickTime > 600) {
+                lastCategoryClickTime = now
+                val intent = Intent(this, DrawingActivity::class.java).apply {
+                    putExtra("Image_Array", category.imageArrayKey)
+                }
+                startActivity(intent)
+            }
+        }
+        recyclerView.adapter = adapter
+
+        // Setup back button press handling
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                showExitConfirmationDialog()
+            }
+        })
+    }
+
+    private fun showExitConfirmationDialog() {
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.app_name))
+            .setIcon(R.drawable.app_icon)
+            .setMessage(getString(R.string.exit_message))
+            .setPositiveButton(getString(R.string.ok)) { _, _ ->
+                finish()
+            }
+            .setNegativeButton(getString(R.string.rate_app)) { _, _ ->
+                val appPackageName = packageName
+                try {
+                    startActivity(
+                        Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$appPackageName"))
+                    )
+                } catch (e: android.content.ActivityNotFoundException) {
+                    startActivity(
+                        Intent(
+                            Intent.ACTION_VIEW,
+                            Uri.parse("http://play.google.com/store/apps/details?id=$appPackageName")
+                        )
+                    )
+                }
+            }
+            .setNeutralButton(getString(R.string.cancel), null)
+            .show()
+    }
+
+    private fun buildCategoryList(): List<DrawingCategory> {
+        val names = resources.getStringArray(R.array.names)
+        val descriptions = resources.getStringArray(R.array.descriptions)
+        val icons = intArrayOf(
+            R.drawable.car_icon,
+            R.drawable.house_icon,
+            R.drawable.spider_icon,
+            R.drawable.gun_icon,
+            R.drawable.boat_icon,
+            R.drawable.bird_icon,
+            R.drawable.elephant_icon,
+            R.drawable.flower_icon,
+            R.drawable.frog_icon,
+            R.drawable.horse_icon,
+            R.drawable.lion_icon,
+            R.drawable.mickey_icon,
+            R.drawable.dog_icon,
+            R.drawable.turtle_icon,
+            R.drawable.princess_icon
+        )
+        val keys = arrayOf(
+            "image_car",
+            "image_house",
+            "image_spider",
+            "image_gun",
+            "image_boat",
+            "image_bird",
+            "image_elephant",
+            "image_flower",
+            "image_frog",
+            "image_horse",
+            "image_lion",
+            "image_mickey_mouse",
+            "image_dog",
+            "image_turtle",
+            "image_princess"
+        )
+        return names.indices.map { i ->
+            DrawingCategory(
+                name = names[i],
+                description = descriptions[i],
+                iconResId = icons[i],
+                imageArrayKey = keys[i]
+            )
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        adView.resume()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        adView.pause()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        adView.destroy()
+    }
+}

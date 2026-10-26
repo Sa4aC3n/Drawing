@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">تعليم الرسم للأطفال</string>
+    <string name="about">حول التطبيق</string>
+    <string name="ok">موافق</string>
+    <string name="cancel">إلغاء</string>
+    <string name="discard">تجاهل</string>
+    <string name="rate_app">تقييم التطبيق</string>
+    <string name="exit_message">هل أنت متأكد من رغبتك في الخروج؟</string>
+    <string name="saved_to_gallery">تم حفظ الرسمة في المعرض بنجاح!</string>
+    <string name="save_error">تعذر حفظ الرسمة. يرجى المحاولة مرة أخرى.</string>
+    <string name="share_image">مشاركة الرسمة</string>
+    <string name="stroke_size">حجم الفرشاة</string>
+    <string name="prev">السابق</string>
+    <string name="next">التالي</string>
+    <string name="pencil">قلم رصاص</string>
+    <string name="eraser">ممحاة</string>
+    <string name="color_picker">منتقي الألوان</string>
+    <string name="stroke">سُمك الخط</string>
+    <string name="clear">مسح اللوحة</string>
+    <string name="save">حفظ الرسمة</string>
+    <string name="category_icon">أيقونة الفئة</string>
+    <string name="undo">تراجع</string>
+    <string name="redo">إعادة</string>
+    <string name="clear_confirm_title">مسح اللوحة؟</string>
+    <string name="clear_confirm_message">هل تريد مسح اللوحة الحالية؟ يمكنك أيضاً استخدام زر التراجع.</string>
+    <string name="leave_prompt_title">رسمة غير محفوظة</string>
+    <string name="leave_prompt_message">لديك رسمة لم يتم حفظها بعد. هل ترغب في حفظها قبل الخروج؟</string>
+    <string name="empty_canvas_warning">يرجى رسم شيء أولاً!</string>
+    <string name="sharing_error">تعذر مشاركة الرسمة.</string>
+</resources>

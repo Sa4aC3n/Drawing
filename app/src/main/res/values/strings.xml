@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Drawing for Kids</string>
+    <string name="about">About</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="discard">Discard</string>
+    <string name="rate_app">Rate App</string>
+    <string name="exit_message">Are you sure you want to quit?</string>
+    <string name="saved_to_gallery">Saved to gallery successfully!</string>
+    <string name="save_error">Could not save drawing. Please try again.</string>
+    <string name="share_image">Share Drawing</string>
+    <string name="stroke_size">Brush Size</string>
+    <string name="prev">Prev</string>
+    <string name="next">Next</string>
+    <string name="pencil">Pencil</string>
+    <string name="eraser">Eraser</string>
+    <string name="color_picker">Color Picker</string>
+    <string name="stroke">Stroke Width</string>
+    <string name="clear">Clear Canvas</string>
+    <string name="save">Save Drawing</string>
+    <string name="category_icon">Category Icon</string>
+    <string name="undo">Undo</string>
+    <string name="redo">Redo</string>
+    <string name="clear_confirm_title">Clear Canvas?</string>
+    <string name="clear_confirm_message">Do you want to clear your drawing? You can also use Undo.</string>
+    <string name="leave_prompt_title">Unsaved Drawing</string>
+    <string name="leave_prompt_message">You have an unsaved drawing. Do you want to save it before leaving?</string>
+    <string name="empty_canvas_warning">Please draw something first!</string>
+    <string name="sharing_error">Could not share drawing.</string>
+
+    <!-- AdMob IDs -->
+    <string name="admob_banner_id">ca-app-pub-5797893761930988/1862556556</string>
+    <string name="admob_app_id">ca-app-pub-5797893761930988~5167376743</string>
+</resources>

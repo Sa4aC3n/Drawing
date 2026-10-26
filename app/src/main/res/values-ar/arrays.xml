@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string-array name="names">
+        <item>سيارة</item>
+        <item>منزل</item>
+        <item>عنكبوت</item>
+        <item>مسدس ماء</item>
+        <item>قارب</item>
+        <item>عصفور</item>
+        <item>فيل</item>
+        <item>وردة</item>
+        <item>ضفدع</item>
+        <item>حصان</item>
+        <item>أسد</item>
+        <item>ميكي ماوس</item>
+        <item>كلب</item>
+        <item>سلحفاة</item>
+        <item>أميرة</item>
+    </string-array>
+
+    <string-array name="descriptions">
+        <item>١٣ خطوة</item>
+        <item>١٦ خطوة</item>
+        <item>١٤ خطوة</item>
+        <item>١٠ خطوات</item>
+        <item>١٣ خطوة</item>
+        <item>١١ خطوة</item>
+        <item>٢٢ خطوة (متقدم)</item>
+        <item>١٠ خطوات</item>
+        <item>١٦ خطوة</item>
+        <item>١٥ خطوة</item>
+        <item>١٣ خطوة</item>
+        <item>١٦ خطوة</item>
+        <item>١٧ خطوة</item>
+        <item>٢٥ خطوة (متقدم)</item>
+        <item>١٣ خطوة</item>
+    </string-array>
+
+</resources>

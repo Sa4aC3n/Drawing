@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/inner_bg">
+
+    <!-- Toolbar -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="0dp"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/colorPrimary"
+        app:titleTextColor="@android:color/white"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Step counter label -->
+    <TextView
+        android:id="@+id/textView_stepsize"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0/0"
+        android:textColor="@color/colorPrimary"
+        android:textSize="14sp"
+        android:fontFamily="sans-serif-medium"
+        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="4dp" />
+
+    <!-- Step image ViewPager (top half) -->
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/view_pager"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/textView_stepsize"
+        app:layout_constraintBottom_toTopOf="@id/navRow"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintVertical_weight="1" />
+
+    <!-- Prev / Next navigation row -->
+    <LinearLayout
+        android:id="@+id/navRow"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:padding="4dp"
+        app:layout_constraintTop_toBottomOf="@id/view_pager"
+        app:layout_constraintBottom_toTopOf="@id/rell"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <Button
+            android:id="@+id/button_prev"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:text="@string/prev"
+            android:background="@drawable/prev_btn"
+            android:layout_marginEnd="16dp" />
+
+        <Button
+            android:id="@+id/button_next"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:text="@string/next"
+            android:background="@drawable/next_btn" />
+
+    </LinearLayout>
+
+    <!-- Drawing canvas area (bottom half) -->
+    <RelativeLayout
+        android:id="@+id/rell"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/navRow"
+        app:layout_constraintBottom_toTopOf="@id/toolRow"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintVertical_weight="1" />
+
+    <!-- Drawing tools row -->
+    <LinearLayout
+        android:id="@+id/toolRow"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:padding="6dp"
+        android:background="@color/toolbarBackground"
+        app:layout_constraintBottom_toTopOf="@id/adView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ImageView
+            android:id="@+id/imageView1_pencil"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/brush_btn"
+            android:padding="4dp"
+            android:layout_margin="4dp"
+            android:contentDescription="@string/pencil" />
+
+        <ImageView
+            android:id="@+id/imageView3_eraser"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/erase_btn"
+            android:padding="4dp"
+            android:layout_margin="4dp"
+            android:contentDescription="@string/eraser" />
+
+        <ImageView
+            android:id="@+id/imageView2_color"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/color_btn"
+            android:padding="4dp"
+            android:layout_margin="4dp"
+            android:contentDescription="@string/color_picker" />
+
+        <ImageView
+            android:id="@+id/imageView4_stroke"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/stroke_btn"
+            android:padding="4dp"
+            android:layout_margin="4dp"
+            android:contentDescription="@string/stroke" />
+
+        <ImageView
+            android:id="@+id/imageView5_clear"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/clear_btn"
+            android:padding="4dp"
+            android:layout_margin="4dp"
+            android:contentDescription="@string/clear" />
+
+        <ImageView
+            android:id="@+id/imageView1_save"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/save_btn"
+            android:padding="4dp"
+            android:layout_margin="4dp"
+            android:contentDescription="@string/save" />
+
+    </LinearLayout>
+
+    <!-- AdMob Banner -->
+    <com.google.android.gms.ads.AdView
+        xmlns:ads="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/adView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        ads:adSize="BANNER"
+        ads:adUnitId="@string/admob_banner_id"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
