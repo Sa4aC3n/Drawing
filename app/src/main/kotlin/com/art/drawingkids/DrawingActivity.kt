@@ -1,16 +1,9 @@
 package com.art.drawingkids
 
-import android.Manifest
-import android.content.ContentValues
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.os.Environment
 import android.os.SystemClock
-import android.provider.MediaStore
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Button
@@ -23,13 +16,9 @@ import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdView
-import java.io.File
-import java.io.FileOutputStream
 
 class DrawingActivity : AppCompatActivity() {
 
@@ -46,6 +35,7 @@ class DrawingActivity : AppCompatActivity() {
     private lateinit var imgSave: ImageView
     private lateinit var adView: AdView
     private lateinit var paintView: PaintView
+    private lateinit var storageManager: DrawingStorageManager
 
     private var totalImages: Int = 0
     private var strokeWidth: Float = 6f
@@ -71,6 +61,7 @@ class DrawingActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         imageArrayKey = intent.getStringExtra("Image_Array") ?: "image_car"
+        storageManager = DrawingStorageManager(this)
 
         adView = findViewById(R.id.adView)
         adView.loadAd(AdRequest.Builder().build())
@@ -324,90 +315,21 @@ class DrawingActivity : AppCompatActivity() {
 
         Thread {
             val bitmap = paintView.exportBitmap()
-            val savedUri = performSaveBitmap(bitmap)
+            val result = storageManager.saveDrawingToGallery(bitmap, imageArrayKey)
 
             runOnUiThread {
                 isSavingOrSharing = false
                 imgSave.isEnabled = true
-                if (savedUri != null) {
+                if (result.success) {
                     Toast.makeText(this, getString(R.string.saved_to_gallery), Toast.LENGTH_SHORT).show()
                     onComplete?.invoke(true)
                 } else {
-                    Toast.makeText(this, getString(R.string.save_error), Toast.LENGTH_LONG).show()
+                    val msg = result.errorMessage ?: getString(R.string.save_error)
+                    Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
                     onComplete?.invoke(false)
                 }
             }
         }.start()
-    }
-
-    private fun performSaveBitmap(bitmap: Bitmap): Uri? {
-        val fileName = "Drawing_${imageArrayKey}_${System.currentTimeMillis()}.jpg"
-
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            // Android 10+ (API 29+) MediaStore API
-            val contentValues = ContentValues().apply {
-                put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
-                put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
-                put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/DrawingForKids")
-                put(MediaStore.Images.Media.IS_PENDING, 1)
-            }
-
-            var uri: Uri? = null
-            try {
-                uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
-                if (uri != null) {
-                    contentResolver.openOutputStream(uri)?.use { stream ->
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, 92, stream)
-                        stream.flush()
-                    }
-                    contentValues.clear()
-                    contentValues.put(MediaStore.Images.Media.IS_PENDING, 0)
-                    contentResolver.update(uri, contentValues, null, null)
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                uri?.let { contentResolver.delete(it, null, null) }
-                return null
-            }
-            uri
-        } else {
-            // Android 9 and below
-            val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-            val appDir = File(picturesDir, "DrawingForKids").apply { mkdirs() }
-            val file = File(appDir, fileName)
-
-            try {
-                FileOutputStream(file).use { stream ->
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 92, stream)
-                    stream.flush()
-                }
-                if (file.exists() && file.length() > 0) {
-                    val scanIntent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
-                    scanIntent.data = Uri.fromFile(file)
-                    sendBroadcast(scanIntent)
-                    Uri.fromFile(file)
-                } else {
-                    null
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                // Fallback to internal app pictures directory
-                try {
-                    val fallbackDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES) ?: filesDir
-                    val fallbackFile = File(fallbackDir, fileName)
-                    FileOutputStream(fallbackFile).use { stream ->
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, 92, stream)
-                        stream.flush()
-                    }
-                    if (fallbackFile.exists() && fallbackFile.length() > 0) {
-                        Uri.fromFile(fallbackFile)
-                    } else null
-                } catch (ex: Exception) {
-                    ex.printStackTrace()
-                    null
-                }
-            }
-        }
     }
 
     // ───────── Verified Share ─────────
@@ -422,41 +344,15 @@ class DrawingActivity : AppCompatActivity() {
 
         Thread {
             val bitmap = paintView.exportBitmap()
-            val cacheFolder = File(cacheDir, "share_cache").apply { mkdirs() }
-            val shareFile = File(cacheFolder, "drawing_share.jpg")
-
-            var writeSuccess = false
-            try {
-                FileOutputStream(shareFile).use { fOut ->
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fOut)
-                    fOut.flush()
-                }
-                writeSuccess = shareFile.exists() && shareFile.length() > 0
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            val result = storageManager.prepareShareIntent(bitmap, getString(R.string.share_image))
 
             runOnUiThread {
                 isSavingOrSharing = false
-                if (writeSuccess) {
-                    try {
-                        val shareUri = FileProvider.getUriForFile(
-                            this,
-                            "${packageName}.fileprovider",
-                            shareFile
-                        )
-                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                            type = "image/jpeg"
-                            putExtra(Intent.EXTRA_STREAM, shareUri)
-                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        }
-                        startActivity(Intent.createChooser(shareIntent, getString(R.string.share_image)))
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        Toast.makeText(this, getString(R.string.sharing_error), Toast.LENGTH_SHORT).show()
-                    }
+                if (result.success && result.shareIntent != null) {
+                    startActivity(result.shareIntent)
                 } else {
-                    Toast.makeText(this, getString(R.string.sharing_error), Toast.LENGTH_SHORT).show()
+                    val msg = result.errorMessage ?: getString(R.string.sharing_error)
+                    Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
                 }
             }
         }.start()
