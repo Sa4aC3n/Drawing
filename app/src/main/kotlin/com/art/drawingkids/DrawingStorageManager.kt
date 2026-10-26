@@ -13,12 +13,13 @@ import java.io.File
 import java.io.FileOutputStream
 
 /**
- * Dedicated manager for saving, exporting, and sharing user drawings.
+ * Dedicated manager for saving, exporting, gallery browsing, and sharing user drawings.
  * Features:
  * - Scoped Storage compliant (MediaStore on Android 10+ / API 29+)
  * - Robust fallback to public/app directories on Android 9-
  * - Non-zero byte file validation before reporting success
  * - Clean temporary cache management for FileProvider sharing
+ * - Integrated gallery retrieval for saved artworks
  */
 class DrawingStorageManager(private val context: Context) {
 
@@ -54,6 +55,9 @@ class DrawingStorageManager(private val context: Context) {
      */
     fun saveDrawingToGallery(bitmap: Bitmap, categoryKey: String): SaveResult {
         val fileName = generateFileName(categoryKey)
+
+        // Also save a local app copy so the in-app "My Artworks" gallery can always load it on any Android version
+        saveToInternalFallback(bitmap, fileName)
 
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             saveViaMediaStore(bitmap, fileName)
@@ -120,7 +124,6 @@ class DrawingStorageManager(private val context: Context) {
             }
 
             if (file.exists() && file.length() > 0) {
-                // Trigger media scanner so it shows immediately in system Gallery
                 val uri = Uri.fromFile(file)
                 val scanIntent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE).apply {
                     data = uri
@@ -155,6 +158,41 @@ class DrawingStorageManager(private val context: Context) {
     }
 
     /**
+     * Retrieves all saved drawings created by the child.
+     */
+    fun getSavedDrawings(): List<File> {
+        val results = mutableListOf<File>()
+
+        // 1. Check app-specific external files dir
+        val appFolder = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        appFolder?.listFiles { file -> file.extension.equals("jpg", ignoreCase = true) }?.let {
+            results.addAll(it)
+        }
+
+        // 2. Check public pictures dir
+        val publicFolder = File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+            SUB_FOLDER_NAME
+        )
+        if (publicFolder.exists()) {
+            publicFolder.listFiles { file -> file.extension.equals("jpg", ignoreCase = true) }?.let {
+                results.addAll(it)
+            }
+        }
+
+        return results.distinctBy { it.name }.sortedByDescending { it.lastModified() }
+    }
+
+    fun deleteDrawing(file: File): Boolean {
+        return try {
+            file.delete()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    /**
      * Writes the bitmap to the FileProvider cache and creates an ACTION_SEND Intent.
      */
     fun prepareShareIntent(bitmap: Bitmap, shareChooserTitle: String): ShareResult {
@@ -175,6 +213,28 @@ class DrawingStorageManager(private val context: Context) {
                 context,
                 "${context.packageName}.fileprovider",
                 shareFile
+            )
+
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = MIME_TYPE_JPEG
+                putExtra(Intent.EXTRA_STREAM, shareUri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+
+            val chooser = Intent.createChooser(shareIntent, shareChooserTitle)
+            ShareResult(success = true, shareIntent = chooser)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            ShareResult(success = false, errorMessage = e.localizedMessage)
+        }
+    }
+
+    fun prepareShareIntentForFile(file: File, shareChooserTitle: String): ShareResult {
+        return try {
+            val shareUri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                file
             )
 
             val shareIntent = Intent(Intent.ACTION_SEND).apply {

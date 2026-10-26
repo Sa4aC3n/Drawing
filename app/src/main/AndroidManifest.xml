@@ -49,6 +49,11 @@
             android:exported="false"
             android:screenOrientation="portrait" />
 
+        <activity
+            android:name=".MyGalleryActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
         <!-- FileProvider for sharing saved images -->
         <provider
             android:name="androidx.core.content.FileProvider"

@@ -80,7 +80,7 @@ class DrawingActivity : AppCompatActivity() {
 
         // Set up custom drawing canvas
         paintView = PaintView(this)
-        paintView.togglePencil(true)
+        paintView.setBrushMode(BrushMode.PENCIL)
         relDraw.addView(
             paintView,
             RelativeLayout.LayoutParams(
@@ -149,15 +149,24 @@ class DrawingActivity : AppCompatActivity() {
         imgClear.setOnClickListener { promptClearCanvas() }
 
         imgEraser.setOnClickListener {
-            paintView.togglePencil(false)
+            paintView.setBrushMode(BrushMode.ERASER)
             imgEraser.setImageResource(R.drawable.erase_active_btn)
             imgPencil.setImageResource(R.drawable.brush_btn)
         }
 
         imgPencil.setOnClickListener {
-            paintView.togglePencil(true)
-            imgPencil.setImageResource(R.drawable.brush_active_btn)
-            imgEraser.setImageResource(R.drawable.erase_btn)
+            if (paintView.getBrushMode() == BrushMode.ERASER) {
+                paintView.setBrushMode(BrushMode.PENCIL)
+                imgPencil.setImageResource(R.drawable.brush_active_btn)
+                imgEraser.setImageResource(R.drawable.erase_btn)
+            } else {
+                showBrushModeDialog()
+            }
+        }
+
+        imgPencil.setOnLongClickListener {
+            showBrushModeDialog()
+            true
         }
 
         imgSave.setOnClickListener {
@@ -165,6 +174,37 @@ class DrawingActivity : AppCompatActivity() {
                 saveDrawing()
             }
         }
+    }
+
+    // ───────── Brush Mode Dialog ─────────
+
+    private fun showBrushModeDialog() {
+        val options = arrayOf(
+            getString(R.string.brush_pencil),
+            getString(R.string.brush_neon),
+            getString(R.string.brush_rainbow)
+        )
+
+        val currentSelection = when (paintView.getBrushMode()) {
+            BrushMode.NEON_GLOW -> 1
+            BrushMode.RAINBOW -> 2
+            else -> 0
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.choose_brush))
+            .setSingleChoiceItems(options, currentSelection) { dialog, which ->
+                when (which) {
+                    0 -> paintView.setBrushMode(BrushMode.PENCIL)
+                    1 -> paintView.setBrushMode(BrushMode.NEON_GLOW)
+                    2 -> paintView.setBrushMode(BrushMode.RAINBOW)
+                }
+                imgPencil.setImageResource(R.drawable.brush_active_btn)
+                imgEraser.setImageResource(R.drawable.erase_btn)
+                dialog.dismiss()
+            }
+            .setNegativeButton(getString(R.string.cancel), null)
+            .show()
     }
 
     // ───────── Exit Confirmation ─────────

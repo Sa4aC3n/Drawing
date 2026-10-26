@@ -4,6 +4,10 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.SystemClock
+import android.view.Menu
+import android.view.MenuItem
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -13,14 +17,19 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
+import com.google.android.material.card.MaterialCardView
 import com.google.android.material.chip.ChipGroup
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var chipGroup: ChipGroup
+    private lateinit var cardDailyChallenge: MaterialCardView
+    private lateinit var txtDailyChallenge: TextView
+    private lateinit var imgChallengeIcon: ImageView
     private lateinit var adView: AdView
     private lateinit var repository: DrawingLessonRepository
+    private lateinit var challengeManager: DailyChallengeManager
     private lateinit var adapter: DrawingAdapter
 
     private var lastCategoryClickTime: Long = 0
@@ -39,21 +48,28 @@ class MainActivity : AppCompatActivity() {
         adView.loadAd(AdRequest.Builder().build())
 
         repository = DrawingLessonRepository(this)
+        challengeManager = DailyChallengeManager(repository)
+
+        // Setup Daily Challenge Card
+        cardDailyChallenge = findViewById(R.id.cardDailyChallenge)
+        txtDailyChallenge = findViewById(R.id.txtDailyChallenge)
+        imgChallengeIcon = findViewById(R.id.imgChallengeIcon)
+
+        val todayChallenge = challengeManager.getTodayChallenge()
+        if (todayChallenge != null) {
+            txtDailyChallenge.text = getString(R.string.daily_challenge_banner, todayChallenge.name)
+            imgChallengeIcon.setImageResource(todayChallenge.iconResId)
+            cardDailyChallenge.setOnClickListener {
+                openDrawingActivity(todayChallenge.imageArrayKey)
+            }
+        }
 
         recyclerView = findViewById(R.id.recyclerView_main)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
         val initialLessons = repository.getLessons(CategoryGroup.ALL)
         adapter = DrawingAdapter(initialLessons) { category ->
-            // Prevent multiple rapid clicks from spawning multiple activities
-            val now = SystemClock.elapsedRealtime()
-            if (now - lastCategoryClickTime > 600) {
-                lastCategoryClickTime = now
-                val intent = Intent(this, DrawingActivity::class.java).apply {
-                    putExtra("Image_Array", category.imageArrayKey)
-                }
-                startActivity(intent)
-            }
+            openDrawingActivity(category.imageArrayKey)
         }
         recyclerView.adapter = adapter
 
@@ -78,6 +94,36 @@ class MainActivity : AppCompatActivity() {
                 showExitConfirmationDialog()
             }
         })
+    }
+
+    private fun openDrawingActivity(imageArrayKey: String) {
+        val now = SystemClock.elapsedRealtime()
+        if (now - lastCategoryClickTime > 600) {
+            lastCategoryClickTime = now
+            val intent = Intent(this, DrawingActivity::class.java).apply {
+                putExtra("Image_Array", imageArrayKey)
+            }
+            startActivity(intent)
+        }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_gallery -> {
+                startActivity(Intent(this, MyGalleryActivity::class.java))
+                true
+            }
+            R.id.action_about -> {
+                startActivity(Intent(this, AboutActivity::class.java))
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
     private fun showExitConfirmationDialog() {

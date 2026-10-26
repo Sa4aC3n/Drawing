@@ -5,6 +5,7 @@
     <string name="ok">موافق</string>
     <string name="cancel">إلغاء</string>
     <string name="discard">تجاهل</string>
+    <string name="delete">حذف</string>
     <string name="rate_app">تقييم التطبيق</string>
     <string name="exit_message">هل أنت متأكد من رغبتك في الخروج؟</string>
     <string name="saved_to_gallery">تم حفظ الرسمة في المعرض بنجاح!</string>
@@ -35,4 +36,20 @@
     <string name="group_vehicles">🚗 مركبات</string>
     <string name="group_characters">👑 شخصيات</string>
     <string name="group_nature">🌸 طبيعة وأشياء</string>
+
+    <!-- Magic Brush Modes -->
+    <string name="choose_brush">اختر نوع الفرشاة السحرية</string>
+    <string name="brush_pencil">✏️ القلم الكلاسيكي</string>
+    <string name="brush_eraser">🧹 الممحاة</string>
+    <string name="brush_neon">✨ توهج نيون مشع</string>
+    <string name="brush_rainbow">🌈 قوس قزح السحري</string>
+
+    <!-- Gamification & Gallery -->
+    <string name="daily_challenge_banner">🌟 تحدي النجوم اليوم: %1$s!</string>
+    <string name="daily_challenge_completed">🏆 رائع يا بطل! لقد أكملت تحدي اليوم!</string>
+    <string name="my_gallery">🖼️ معرض لوحاتي</string>
+    <string name="no_saved_drawings">لا توجد لوحات محفوظة بعد!\nابدأ برسم لوحتك الأولى يا فنان! 🎨</string>
+    <string name="delete_drawing">حذف اللوحة</string>
+    <string name="delete_drawing_confirm">هل أنت متأكد من حذف هذه اللوحة؟</string>
+    <string name="deleted_success">تم حذف اللوحة</string>
 </resources>

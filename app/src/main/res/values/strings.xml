@@ -5,6 +5,7 @@
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
     <string name="discard">Discard</string>
+    <string name="delete">Delete</string>
     <string name="rate_app">Rate App</string>
     <string name="exit_message">Are you sure you want to quit?</string>
     <string name="saved_to_gallery">Saved to gallery successfully!</string>
@@ -35,6 +36,22 @@
     <string name="group_vehicles">🚗 Vehicles</string>
     <string name="group_characters">👑 Characters</string>
     <string name="group_nature">🌸 Nature &amp; Objects</string>
+
+    <!-- Magic Brush Modes -->
+    <string name="choose_brush">Choose Brush Style</string>
+    <string name="brush_pencil">✏️ Classic Pencil</string>
+    <string name="brush_eraser">🧹 Eraser</string>
+    <string name="brush_neon">✨ Neon Glow</string>
+    <string name="brush_rainbow">🌈 Rainbow Magic</string>
+
+    <!-- Gamification & Gallery -->
+    <string name="daily_challenge_banner">🌟 Today\'s Star Challenge: %1$s!</string>
+    <string name="daily_challenge_completed">🏆 Congratulations! You completed today\'s challenge!</string>
+    <string name="my_gallery">🖼️ My Artworks</string>
+    <string name="no_saved_drawings">No saved drawings yet!\nStart drawing your first masterpiece! 🎨</string>
+    <string name="delete_drawing">Delete Artwork</string>
+    <string name="delete_drawing_confirm">Do you want to delete this artwork?</string>
+    <string name="deleted_success">Artwork deleted</string>
 
     <!-- AdMob IDs -->
     <string name="admob_banner_id">ca-app-pub-5797893761930988/1862556556</string>

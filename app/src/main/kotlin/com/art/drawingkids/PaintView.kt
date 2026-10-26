@@ -2,6 +2,7 @@ package com.art.drawingkids
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BlurMaskFilter
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -11,10 +12,20 @@ import android.view.MotionEvent
 import android.view.View
 
 /**
+ * Brush modes for kid-friendly magic effects.
+ */
+enum class BrushMode(val titleResId: Int) {
+    PENCIL(R.string.brush_pencil),
+    ERASER(R.string.brush_eraser),
+    NEON_GLOW(R.string.brush_neon),
+    RAINBOW(R.string.brush_rainbow)
+}
+
+/**
  * Robust, production-ready custom drawing canvas view.
  * Features:
  * - Anti-aliased smooth bezier curves
- * - High-precision pencil and eraser modes
+ * - Multi-mode brush system: Classic Pencil, Clean Eraser, Neon Glow, Rainbow Magic
  * - Full Undo / Redo history powered by tested DrawingHistoryTracker
  * - Direct bitmap export without deprecated drawingCache
  * - Clean white canvas without hardware-acceleration artifacts
@@ -29,7 +40,7 @@ class PaintView @JvmOverloads constructor(
         val path: Path,
         val color: Int,
         val strokeWidth: Float,
-        val isEraser: Boolean
+        val brushMode: BrushMode
     )
 
     companion object {
@@ -56,13 +67,22 @@ class PaintView @JvmOverloads constructor(
         strokeCap = Paint.Cap.ROUND
     }
 
+    private val glowPaint = Paint().apply {
+        isAntiAlias = true
+        isDither = true
+        style = Paint.Style.STROKE
+        strokeJoin = Paint.Join.ROUND
+        strokeCap = Paint.Cap.ROUND
+    }
+
     // Drawing state
     private val currentPath = Path()
     private var lastX = 0f
     private var lastY = 0f
     private var currentColor = Color.BLACK
     private var currentStrokeWidth = 6f
-    private var isPencilMode = true
+    private var currentBrushMode = BrushMode.PENCIL
+    private var rainbowHue = 0f
 
     // Undo & Redo tracker
     private val historyTracker = DrawingHistoryTracker<Stroke>()
@@ -91,9 +111,37 @@ class PaintView @JvmOverloads constructor(
         val canvas = bufferCanvas ?: return
         canvas.drawColor(CANVAS_BG_COLOR)
         for (stroke in historyTracker.getItems()) {
-            strokePaint.color = stroke.color
-            strokePaint.strokeWidth = stroke.strokeWidth
-            canvas.drawPath(stroke.path, strokePaint)
+            drawSingleStroke(canvas, stroke)
+        }
+    }
+
+    private fun drawSingleStroke(canvas: Canvas, stroke: Stroke) {
+        when (stroke.brushMode) {
+            BrushMode.ERASER -> {
+                strokePaint.maskFilter = null
+                strokePaint.color = CANVAS_BG_COLOR
+                strokePaint.strokeWidth = stroke.strokeWidth * 1.5f
+                canvas.drawPath(stroke.path, strokePaint)
+            }
+            BrushMode.NEON_GLOW -> {
+                // Outer glowing blur
+                glowPaint.color = stroke.color
+                glowPaint.strokeWidth = stroke.strokeWidth * 1.8f
+                glowPaint.maskFilter = BlurMaskFilter(stroke.strokeWidth * 0.8f, BlurMaskFilter.Blur.NORMAL)
+                canvas.drawPath(stroke.path, glowPaint)
+
+                // Inner core line
+                strokePaint.maskFilter = null
+                strokePaint.color = Color.WHITE
+                strokePaint.strokeWidth = stroke.strokeWidth * 0.6f
+                canvas.drawPath(stroke.path, strokePaint)
+            }
+            BrushMode.RAINBOW, BrushMode.PENCIL -> {
+                strokePaint.maskFilter = null
+                strokePaint.color = stroke.color
+                strokePaint.strokeWidth = stroke.strokeWidth
+                canvas.drawPath(stroke.path, strokePaint)
+            }
         }
     }
 
@@ -106,9 +154,29 @@ class PaintView @JvmOverloads constructor(
 
         // Draw the stroke currently in progress
         if (!currentPath.isEmpty) {
-            currentPaint.color = if (isPencilMode) currentColor else CANVAS_BG_COLOR
-            currentPaint.strokeWidth = currentStrokeWidth
-            canvas.drawPath(currentPath, currentPaint)
+            val effectiveWidth = if (currentBrushMode == BrushMode.ERASER) currentStrokeWidth * 1.5f else currentStrokeWidth
+            val effectiveColor = when (currentBrushMode) {
+                BrushMode.ERASER -> CANVAS_BG_COLOR
+                BrushMode.RAINBOW -> Color.HSVToColor(floatArrayOf(rainbowHue, 0.95f, 1f))
+                BrushMode.NEON_GLOW, BrushMode.PENCIL -> currentColor
+            }
+
+            if (currentBrushMode == BrushMode.NEON_GLOW) {
+                glowPaint.color = effectiveColor
+                glowPaint.strokeWidth = effectiveWidth * 1.8f
+                glowPaint.maskFilter = BlurMaskFilter(effectiveWidth * 0.8f, BlurMaskFilter.Blur.NORMAL)
+                canvas.drawPath(currentPath, glowPaint)
+
+                currentPaint.maskFilter = null
+                currentPaint.color = Color.WHITE
+                currentPaint.strokeWidth = effectiveWidth * 0.6f
+                canvas.drawPath(currentPath, currentPaint)
+            } else {
+                currentPaint.maskFilter = null
+                currentPaint.color = effectiveColor
+                currentPaint.strokeWidth = effectiveWidth
+                canvas.drawPath(currentPath, currentPaint)
+            }
         }
     }
 
@@ -119,6 +187,9 @@ class PaintView @JvmOverloads constructor(
         currentPath.moveTo(x, y)
         lastX = x
         lastY = y
+        if (currentBrushMode == BrushMode.RAINBOW) {
+            rainbowHue = (rainbowHue + 15f) % 360f
+        }
     }
 
     private fun touchMove(x: Float, y: Float) {
@@ -128,28 +199,35 @@ class PaintView @JvmOverloads constructor(
             currentPath.quadTo(lastX, lastY, (x + lastX) / 2, (y + lastY) / 2)
             lastX = x
             lastY = y
+            if (currentBrushMode == BrushMode.RAINBOW) {
+                rainbowHue = (rainbowHue + 2f) % 360f
+            }
         }
     }
 
     private fun touchUp() {
         currentPath.lineTo(lastX, lastY)
 
-        // Commit stroke to buffer canvas
-        val color = if (isPencilMode) currentColor else CANVAS_BG_COLOR
-        strokePaint.color = color
-        strokePaint.strokeWidth = currentStrokeWidth
+        val strokeColor = when (currentBrushMode) {
+            BrushMode.ERASER -> CANVAS_BG_COLOR
+            BrushMode.RAINBOW -> Color.HSVToColor(floatArrayOf(rainbowHue, 0.95f, 1f))
+            BrushMode.NEON_GLOW, BrushMode.PENCIL -> currentColor
+        }
 
-        bufferCanvas?.drawPath(currentPath, strokePaint)
+        val completedStroke = Stroke(
+            path = Path(currentPath),
+            color = strokeColor,
+            strokeWidth = currentStrokeWidth,
+            brushMode = currentBrushMode
+        )
+
+        // Commit stroke to buffer canvas
+        bufferCanvas?.let { canvas ->
+            drawSingleStroke(canvas, completedStroke)
+        }
 
         // Save completed stroke to history tracker
-        historyTracker.record(
-            Stroke(
-                path = Path(currentPath),
-                color = color,
-                strokeWidth = currentStrokeWidth,
-                isEraser = !isPencilMode
-            )
-        )
+        historyTracker.record(completedStroke)
         currentPath.reset()
 
         notifyHistoryChanged()
@@ -182,20 +260,23 @@ class PaintView @JvmOverloads constructor(
 
     // ───────── Public Control APIs ─────────
 
-    fun togglePencil(pencilMode: Boolean) {
-        isPencilMode = pencilMode
-        if (pencilMode) {
-            currentPaint.color = currentColor
-        } else {
-            currentPaint.color = CANVAS_BG_COLOR
-        }
+    fun setBrushMode(mode: BrushMode) {
+        currentBrushMode = mode
     }
 
-    fun isPencil(): Boolean = isPencilMode
+    fun getBrushMode(): BrushMode = currentBrushMode
+
+    fun togglePencil(pencilMode: Boolean) {
+        currentBrushMode = if (pencilMode) BrushMode.PENCIL else BrushMode.ERASER
+    }
+
+    fun isPencil(): Boolean = currentBrushMode != BrushMode.ERASER
 
     fun setDrawColor(color: Int) {
         currentColor = color
-        togglePencil(true)
+        if (currentBrushMode == BrushMode.ERASER) {
+            currentBrushMode = BrushMode.PENCIL
+        }
     }
 
     fun getColor(): Int = currentColor
@@ -258,9 +339,7 @@ class PaintView @JvmOverloads constructor(
 
         // Draw all saved strokes
         for (stroke in historyTracker.getItems()) {
-            strokePaint.color = stroke.color
-            strokePaint.strokeWidth = stroke.strokeWidth
-            exportCanvas.drawPath(stroke.path, strokePaint)
+            drawSingleStroke(exportCanvas, stroke)
         }
 
         return exportBmp
