@@ -11,12 +11,14 @@ class DrawingModelTest {
     @Test
     fun testDrawingCategoryCreation() {
         val category = DrawingCategory(
+            id = "car",
             name = "Car",
             description = "13 Steps",
             iconResId = 12345,
             imageArrayKey = "image_car"
         )
 
+        assertEquals("car", category.id)
         assertEquals("Car", category.name)
         assertEquals("13 Steps", category.description)
         assertEquals(12345, category.iconResId)

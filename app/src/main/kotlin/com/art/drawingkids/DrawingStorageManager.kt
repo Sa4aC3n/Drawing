@@ -76,7 +76,7 @@ class DrawingStorageManager(private val context: Context) {
         }
 
         var insertedUri: Uri? = null
-        try {
+        return try {
             insertedUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
                 ?: return SaveResult(success = false, errorMessage = "Failed to create MediaStore entry")
 
